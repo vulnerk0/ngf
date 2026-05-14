@@ -1,0 +1,693 @@
+<html>
+  <head>
+    <title>Nmap Graph</title>
+    <meta charset="utf-8" />
+    
+    <script src="lib/bindings/utils.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css"
+      integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js"
+      integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+     
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+      crossorigin="anonymous"
+    ></script>
+
+    <style type="text/css">
+
+         html, body {
+             height: 100%;
+             margin: 0;
+             padding: 0;
+             overflow: hidden;
+         }
+
+         body {
+             display: flex;
+             flex-direction: column;
+         }
+
+         #mynetwork {
+             /* pyvis injects width/height — override both so it fills flex parent */
+             width: 100% !important;
+             height: 100% !important;
+             background-color: #343a40;
+             border: none;
+             position: relative;
+             flex: 1 1 auto;
+             min-width: 0;
+         }
+
+         
+
+         
+
+         /* ── Layout ── */
+         #page-wrapper {
+             display: flex;
+             align-items: stretch;
+             flex: 1 1 auto;
+             min-height: 0;
+             overflow: hidden;
+         }
+
+         #host-sidebar {
+             width: 600px;
+             min-width: 200px;
+             max-width: 80vw;
+             background: #272b30;
+             display: flex;
+             flex-direction: column;
+             overflow: hidden;
+             font-family: 'Segoe UI', system-ui, sans-serif;
+             flex-shrink: 0;
+         }
+
+         /* ── Drag-to-resize handle ── */
+         #sidebar-resizer {
+             width: 5px;
+             min-width: 5px;
+             background: #495057;
+             cursor: col-resize;
+             flex-shrink: 0;
+             position: relative;
+             transition: background .15s;
+             z-index: 10;
+         }
+
+         #sidebar-resizer:hover,
+         #sidebar-resizer.dragging {
+             background: #f0b429;
+         }
+
+         #sidebar-resizer::after {
+             content: '';
+             position: absolute;
+             top: 50%;
+             left: 50%;
+             transform: translate(-50%, -50%);
+             width: 1px;
+             height: 32px;
+             background: rgba(255,255,255,.18);
+             border-radius: 1px;
+         }
+
+         #sidebar-header {
+             padding: 14px 16px;
+             background: #272b30;
+             border-bottom: 1px solid #495057;
+             font-size: 13px;
+             font-weight: 600;
+             color: #a0a8c0;
+             letter-spacing: .06em;
+             text-transform: uppercase;
+             display: flex;
+             align-items: center;
+             gap: 8px;
+         }
+
+         #sidebar-header svg { flex-shrink: 0; }
+
+         #host-list {
+             overflow-y: auto;
+             flex: 1;
+             padding: 8px;
+             display: flex;
+             flex-direction: column;
+             gap: 6px;
+         }
+
+         #host-list::-webkit-scrollbar { width: 5px; }
+         #host-list::-webkit-scrollbar-track { background: transparent; }
+         #host-list::-webkit-scrollbar-thumb { background: #495057; border-radius: 3px; }
+
+         .host-btn {
+             width: 100%;
+             background: #2b3035;
+             border: 1px solid #495057;
+             padding: 10px 12px;
+             cursor: pointer;
+             text-align: left;
+             color: #c8d0e8;
+             transition: background .15s, border-color .15s;
+         }
+
+         .host-btn:hover { background: #3f464d; border-color: #6c757d; }
+         .host-btn.active { background: #495057; border-color: #adb5bd; }
+
+         .host-btn .hb-ip {
+             font-size: 11px;
+             color: #adb5bd;
+             font-weight: 700;
+             font-family: 'Cascadia Code', 'Fira Code', monospace;
+         }
+
+         .host-btn .hb-hostname {
+             font-size: 17px;
+             color: #f8f9fa;
+             margin-top: 2px;
+             white-space: nowrap;
+             overflow: hidden;
+             text-overflow: ellipsis;
+         }
+
+         .host-btn .hb-meta {
+             display: flex;
+             gap: 10px;
+             margin-top: 6px;
+         }
+
+         .hb-badge {
+             font-size: 13px;
+             padding: 2px 7px;
+             font-weight: 600;
+             background: #495057;
+             color: #dee2e6;
+         }
+
+         .hb-badge.os  { background: #4d453f; color: #ced4da; }
+         .hb-badge.ports { background: #495057; color: #f8f9fa; }
+
+         /* ── Detail Panel ── */
+         #host-detail {
+             display: none;
+             border-top: 1px solid #495057;
+             background: #2b3035;
+             flex-direction: column;
+             flex: 1 1 auto;
+             min-height: 0;
+             overflow: hidden;
+         }
+
+         #detail-header {
+             padding: 10px 14px;
+             display: flex;
+             align-items: center;
+             justify-content: space-between;
+             background: #2b3035;
+             border-bottom: 1px solid #495057;
+         }
+
+         #detail-header .dh-ip {
+             font-family: monospace;
+             font-size: 14px;
+             font-weight: 700;
+             color: #f8f9fa;
+         }
+
+         #detail-close {
+             background: none;
+             border: 1px solid #495057;
+             color: #adb5bd;
+             cursor: pointer;
+             font-size: 14px;
+             padding: 3px 8px;
+         }
+
+         #detail-close:hover { color: #f8f9fa; border-color: #adb5bd; }
+
+         #detail-body {
+             overflow-y: auto;
+             overflow-x: auto;
+             padding: 10px;
+             flex: 1;
+         }
+
+         #detail-body::-webkit-scrollbar { width: 5px; height: 5px; }
+         #detail-body::-webkit-scrollbar-track { background: transparent; }
+         #detail-body::-webkit-scrollbar-thumb { background: #495057; border-radius: 3px; }
+
+         /* ── nmap-xslt style port table ── */
+         .port-table {
+             /* auto layout: every column sizes to its content */
+             width: auto;
+             min-width: 100%;
+             border-collapse: collapse;
+             font-size: 12px;
+             margin-bottom: 10px;
+             table-layout: auto;
+             white-space: nowrap;   /* keep each cell on one line; body scrolls if needed */
+         }
+
+         .port-table thead tr {
+             background: #23272b;
+             color: #adb5bd;
+             font-size: 11px;
+             font-weight: 700;
+             text-transform: uppercase;
+             letter-spacing: .05em;
+         }
+
+         .port-table thead th {
+             padding: 6px 10px;
+             border: 1px solid #495057;
+             white-space: nowrap;
+         }
+
+         .port-table tbody tr.pt-port-row {
+             border-bottom: 1px solid #495057;
+             transition: background .12s;
+         }
+
+         .port-table tbody tr.pt-port-row:hover { background: #3d444b; }
+
+         .port-table tbody tr.pt-port-row.state-open    { background: #1a2e1a; }
+         .port-table tbody tr.pt-port-row.state-open:hover { background: #22381e; }
+         .port-table tbody tr.pt-port-row.state-closed   { background: #2e1a1a; }
+         .port-table tbody tr.pt-port-row.state-filtered { background: #2e2a14; }
+
+         .port-table td {
+             padding: 5px 10px;
+             border-right: 1px solid #3a4049;
+             color: #dee2e6;
+             vertical-align: top;
+             white-space: nowrap;
+         }
+
+         .pt-port-num {
+             font-family: 'Cascadia Code','Fira Code',monospace;
+             font-weight: 700;
+             color: #f8f9fa;
+             font-size: 13px;
+         }
+
+         .pt-proto-badge {
+             display: inline-block;
+             border-radius: 3px;
+             padding: 0 4px;
+             font-size: 13px;
+             font-weight: 600;
+         }
+
+         .pt-state-open     { font-weight: 700; }
+         .pt-state-closed   { color: #eb5757; font-weight: 700; }
+         .pt-state-filtered { color: #f0b429; font-weight: 700; }
+
+         /* script rows */
+         .port-table tbody tr.pt-script-row td {
+             background: #212529;
+             border-right: 1px solid #3a4049;
+             border-bottom: 1px solid #2c3136;
+             white-space: normal;   /* let long script output wrap */
+             padding: 0;
+         }
+
+         .pt-script-id {
+             display: block;
+             padding: 5px 8px;
+             font-size: 11px;
+             font-weight: 700;
+             color: #f0b429;
+             background: #1a1d21;
+             border-right: 1px solid #3a4049;
+             white-space: nowrap;
+         }
+
+         .pt-script-output {
+             display: block;
+             padding: 5px 8px;
+             font-family: 'Cascadia Code','Fira Code',monospace;
+             font-size: 11px;
+             color: #ced4da;
+             white-space: pre-wrap;
+             word-break: break-all;
+         }
+
+         
+    </style>
+  </head>
+
+  <body>
+    <div
+      class="card"
+      style="
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        border: none;
+        border-radius: 0;
+        min-height: 0;
+        overflow: hidden;
+      "
+    >
+       
+      <div id="page-wrapper">
+        
+
+        <!-- ══ HOST SIDEBAR ══ -->
+        <div id="host-sidebar">
+          <div id="sidebar-header">
+            <!-- <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#7eb8ff"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="2" y="3" width="20" height="14" rx="2" />
+              <path d="M8 21h8M12 17v4" />
+            </svg> -->
+            Hosts
+            <span
+              id="host-count"
+              style="
+                margin-left: auto;
+                font-size: 11px;
+                color: #919192;
+                font-weight: 400;
+              "
+            ></span>
+          </div>
+          <div id="host-list">
+            <div
+              style="
+                color: #555;
+                font-size: 12px;
+                text-align: center;
+                padding: 20px;
+              "
+            >
+              No host data provided<br />Pass
+              the XML nmap output to <code>ngf</code>.
+            </div>
+          </div>
+
+          <!-- Detail panel (shown on click) -->
+          <div id="host-detail">
+            <div id="detail-header">
+              <span class="dh-ip" id="detail-ip"></span>
+              <button id="detail-close" title="Back to hosts">← Back</button>
+            </div>
+            <div id="detail-body"></div>
+          </div>
+        </div>
+        <div id="sidebar-resizer" title="Drag to resize"></div>
+        <div id="mynetwork" class="card-body"></div>
+      </div>
+    </div>
+
+     
+
+    <script type="text/javascript">
+
+      // initialize global variables.
+      var edges;
+      var nodes;
+      var allNodes;
+      var allEdges;
+      var nodeColors;
+      var originalNodes;
+      var network;
+      var container;
+      var options, data;
+      var filter = {
+          item : '',
+          property : '',
+          value : []
+      };
+
+      
+
+      
+
+      // This method is responsible for drawing the graph, returns the drawn network
+      function drawGraph() {
+          var container = document.getElementById('mynetwork');
+
+          
+
+          // parsing and collecting nodes and edges from the python
+          nodes = new vis.DataSet([{"color": "#97c2fc", "font": {"color": "#FFFFFF"}, "host_info": {"hostname": "freshmeat.net", "ip": "66.35.250.168", "os": "MicroTik RouterOS 2.9.46", "ports": [{"portid": "80", "product": "Apache httpd", "proto": "tcp", "scripts_arr": [{"id": "robots.txt", "output": "User-Agent: * /img/ /redir/ "}, {"id": "HTML title", "output": "freshmeat.net: Welcome to freshmeat.net"}], "service": "http", "state": "open", "version": "1.3.39"}, {"portid": "443", "product": null, "proto": "tcp", "scripts_arr": [], "service": "https", "state": "closed", "version": null}]}, "id": "66.35.250.168", "image": "./ngf_icons/Unknown.png", "label": "freshmeat.net [2]", "shape": "image"}, {"color": "#97c2fc", "font": {"color": "#FFFFFF"}, "host_info": {"hostname": "sourceforge.net", "ip": "66.35.250.203", "os": "Linux 2.6.17 - 2.6.18", "ports": [{"portid": "80", "product": "lighttpd", "proto": "tcp", "scripts_arr": [{"id": "HTML title", "output": "Site doesn\u0027t have a title."}, {"id": "robots.txt", "output": "User-agent: * \n/forum /pm /search /softwaremap /top /tracker /users "}], "service": "http", "state": "open", "version": "1.4.18"}, {"portid": "443", "product": "lighttpd", "proto": "tcp", "scripts_arr": [{"id": "SSLv2", "output": "server still supports SSLv2\n\tSSL2_DES_192_EDE3_CBC_WITH_MD5\n\tSSL2_RC2_CBC_128_CBC_WITH_MD5\n\tSSL2_RC4_128_WITH_MD5\n\tSSL2_RC4_64_WITH_MD5\n\tSSL2_DES_64_CBC_WITH_MD5\n\tSSL2_RC2_CBC_128_CBC_WITH_MD5\n\tSSL2_RC4_128_EXPORT40_WITH_MD5\n"}, {"id": "HTML title", "output": "Site doesn\u0027t have a title."}], "service": "http", "state": "open", "version": "1.4.18"}, {"portid": "563", "product": null, "proto": "tcp", "scripts_arr": [], "service": "snews", "state": "closed", "version": null}]}, "id": "66.35.250.203", "image": "./ngf_icons/Linux.png", "label": "sourceforge.net [3]", "shape": "image"}, {"color": "#97c2fc", "font": {"color": "#FFFFFF"}, "host_info": {"hostname": "64.13.134.48", "ip": "64.13.134.48", "os": "Linux 2.6.17 - 2.6.21", "ports": [{"portid": "22", "product": "OpenSSH", "proto": "tcp", "scripts_arr": [], "service": "ssh", "state": "open", "version": "4.3"}, {"portid": "25", "product": null, "proto": "tcp", "scripts_arr": [], "service": "smtp", "state": "closed", "version": null}, {"portid": "53", "product": null, "proto": "tcp", "scripts_arr": [], "service": "domain", "state": "open", "version": null}, {"portid": "70", "product": null, "proto": "tcp", "scripts_arr": [], "service": "gopher", "state": "closed", "version": null}, {"portid": "80", "product": "Apache httpd", "proto": "tcp", "scripts_arr": [{"id": "HTML title", "output": "Nmap - Free Security Scanner For Network Exploration \u0026 Securit..."}], "service": "http", "state": "open", "version": "2.2.2"}, {"portid": "113", "product": null, "proto": "tcp", "scripts_arr": [], "service": "auth", "state": "closed", "version": null}]}, "id": "64.13.134.48", "image": "./ngf_icons/Linux.png", "label": "64.13.134.48 [6]", "shape": "image"}, {"color": "#97c2fc", "font": {"color": "#FFFFFF"}, "host_info": {"hostname": "pub2.kernel.org", "ip": "204.152.191.37", "os": "Linux 2.6.5 - 2.6.9", "ports": [{"portid": "21", "product": "vsftpd or WU-FTPD", "proto": "tcp", "scripts_arr": [{"id": "Anonymous FTP", "output": "FTP: Anonymous login allowed"}], "service": "ftp", "state": "open", "version": null}, {"portid": "22", "product": "OpenSSH", "proto": "tcp", "scripts_arr": [], "service": "ssh", "state": "open", "version": "4.3"}, {"portid": "79", "product": null, "proto": "tcp", "scripts_arr": [], "service": "finger", "state": "open", "version": null}, {"portid": "80", "product": "Apache httpd", "proto": "tcp", "scripts_arr": [{"id": "robots.txt", "output": "\n/cgi-bin/ /pub/mirrors/ /pub/scm/ \n/mirrors/process-registration.cgi /lsb/ /linuxeda/ /os.org/ /debian/ \n/debian-cd/ /lanana/ /li18nux/ /freestandards/ \n/filehub/ /diff/ /git/ /hg/ "}, {"id": "HTML title", "output": "The Linux Kernel Archives"}], "service": "http", "state": "open", "version": "2.2.2"}, {"portid": "199", "product": "Linux SNMP multiplexer", "proto": "tcp", "scripts_arr": [], "service": "smux", "state": "open", "version": null}, {"portid": "443", "product": null, "proto": "tcp", "scripts_arr": [{"id": "HTML title", "output": "The Linux Kernel Archives"}], "service": "https", "state": "open", "version": null}, {"portid": "873", "product": null, "proto": "tcp", "scripts_arr": [], "service": "rsync", "state": "open", "version": null}, {"portid": "1720", "product": null, "proto": "tcp", "scripts_arr": [], "service": "H.323/Q.931", "state": "filtered", "version": null}, {"portid": "5978", "product": null, "proto": "tcp", "scripts_arr": [], "service": "ncd-diag-tcp", "state": "open", "version": null}, {"portid": "7000", "product": null, "proto": "tcp", "scripts_arr": [], "service": "afs3-fileserver", "state": "open", "version": null}]}, "id": "204.152.191.37", "image": "./ngf_icons/Linux.png", "label": "pub2.kernel.org [10]", "shape": "image"}, {"color": "#97c2fc", "font": {"color": "#FFFFFF"}, "host_info": {"hostname": "cvs.openbsd.org", "ip": "199.185.137.3", "os": "Netcomm V300 VoIP gateway", "ports": [{"portid": "21", "product": "bsd-ftpd", "proto": "tcp", "scripts_arr": [], "service": "ftp", "state": "open", "version": null}, {"portid": "25", "product": "OpenBSD spamd", "proto": "tcp", "scripts_arr": [{"id": "SMTP", "output": "EHLO with errors or timeout.  Enable --script-trace to see what is happening."}], "service": "smtp", "state": "open", "version": null}, {"portid": "53", "product": "ISC BIND", "proto": "tcp", "scripts_arr": [{"id": "zone-transfer", "output": " \nopenbsd.org.                  SOA     zeus.theos.com. root.theos.com.  \nopenbsd.org.                  NS      ns.appli.se.                     \nopenbsd.org.                  NS      ns\tsigmasoft.com.                \nopenbsd.org.                  NS      cvs.openbsd.org.                 \nopenbsd.org.                  NS      citi.umich.edu.                  \nopenbsd.org.                  NS      zeus.theos.com.                  \nopenbsd.org.                  A       199.185.137.3                    \nopenbsd.org.                  MX      shear.ucar.edu.                  \nopenbsd.org.                  MX      cvs.openbsd.org.                 \nalpha.openbsd.org.            A       199.185.137.77                   \namd64.openbsd.org.            A       199.185.137.80                   \nanoncvs.openbsd.org.          CNAME  \nftp.ar.openbsd.org.           CNAME  \nftp1.ar.openbsd.org.          CNAME  \nwww.ar.openbsd.org.           CNAME  \narmish.openbsd.org.           A       199.185.137.155                  \nftp.as.openbsd.org.           CNAME  \nftp1.as.openbsd.org.          CNAME  \nftp2.as.openbsd.org.          CNAME  \nftp3.as.openbsd.org.          CNAME  \nftp4.as.openbsd.org.          CNAME  \nanoncvs2.at.openbsd.org.      A       128.130.59.60                    \nwww.at.openbsd.org.           CNAME  \nftp.au.openbsd.org.           CNAME  \nftp1.au.openbsd.org.          CNAME  \nftp2.au.openbsd.org.          CNAME  \nftp3.au.openbsd.org.          CNAME  \nwww.au.openbsd.org.           CNAME  \ncvsup.bg.openbsd.org.         A       217.10.246.146                   \nftp.bg.openbsd.org.           A       217.10.246.146                   \nftp1.bg.openbsd.org.          A       217.10.246.146                   \nc.openbsd.org.                CNAME  \nanoncvs.ca.openbsd.org.       CNAME  \nanoncvs1.ca.openbsd.org.      CNAME  \nctm.ca.openbsd.org.           CNAME  \ncvsup.ca.openbsd.org.         A       206.51.28.249                    \nftp.ca.openbsd.org.           CNAME  \nftp1.ca.openbsd.org.          CNAME  \nwww.ca.openbsd.org.           A       129.128.5.191                    \ncats.openbsd.org.             A       199.185.137.33                   \nctm.openbsd.org.              CNAME  \ncvs.openbsd.org.              A       199.185.137.3                    \ncvsup.openbsd.org.            CNAME  \nde.openbsd.org.               NS      a.ns.bsws.de.                    \nde.openbsd.org.               NS      a.ns\tpestilenz.org.              \nde.openbsd.org.               NS      b.ns.bsws.de.                    \nde.openbsd.org.               NS      c.ns.bsws.de.                    \nftp.eu.openbsd.org.           CNAME  \nftp1.eu.openbsd.org.          CNAME  \nftp2.eu.openbsd.org.          CNAME  \nftp3.eu.openbsd.org.          CNAME  \nftp4.eu.openbsd.org.          CNAME  \nftp5.eu.openbsd.org.          CNAME  \nftp6.eu.openbsd.org.          CNAME  \nftp8.eu.openbsd.org.          CNAME  \nftp9.eu.openbsd.org.          A       193.120.14.244                   \ncvsup.fr.openbsd.org.         CNAME  \nftp.fr.openbsd.org.           CNAME  \nftp1.fr.openbsd.org.          CNAME  \nftp2.fr.openbsd.org.          CNAME  \nftp3.fr.openbsd.org.          CNAME  \nftp.openbsd.org.              CNAME  \ngw.openbsd.org.               A       199.185.230.1                    \nhp3...openbsd.org.            A       199.185.137.74                   \nhppa.openbsd.org.             A       199.185.137.79                   \nhttps.openbsd.org.            A       68.148.128.241                   \ncvsup.hu.openbsd.org.         CNAME  \ni386.openbsd.org.             A       199.185.137.8                    \ncvsup.id.openbsd.org.         CNAME  \nftp.ie.openbsd.org.           A       193.120.14.244                   \nftp19.ie.openbsd.org.         A       193.120.14.244                   \nwww.ie.openbsd.org.           A       193.120.14.244                   \nanoncvs.jp.openbsd.org.       CNAME  \nanoncvs1.jp.openbsd.org.      CNAME  \ncvsup.jp.openbsd.org.         CNAME  \nftp.jp.openbsd.org.           CNAME  \nftp1.jp.openbsd.org.          CNAME  \nftp2.jp.openbsd.org.          CNAME  \nwww.jp.openbsd.org.           CNAME  \ncvsup.kr.openbsd.org.         CNAME  \nftp.kr.openbsd.org.           CNAME  \nftp1.kr.openbsd.org.          CNAME  \nlandisk.openbsd.org.          A       199.185.137.81                   \nlandiskx.openbsd.org.         A       199.185.137.157                  \nlist.openbsd.org.             CNAME  \nlists.openbsd.org.            CNAME  \nlocalhost.openbsd.org.        A       127.0.0.1                        \nloghost.openbsd.org.          CNAME  \nmacppc.openbsd.org.           A       199.185.137.87                   \nmail.openbsd.org.             CNAME  \nmusic.openbsd.org.            A       199.185.137.230                  \nmvme68k.openbsd.org.          A       199.185.137.42                   \nmvme88k.openbsd.org.          A       199.185.137.88                   \nn.openbsd.org.                A       199.185.136.200                  \nn.openbsd.org.                MX      cvs.openbsd.org.                 \nanoncvs.nl.openbsd.org.       CNAME  \nanoncvs1.nl.openbsd.org.      CNAME  \nanoncvs.no.openbsd.org.       CNAME  \nanoncvs1.no.openbsd.org.      CNAME  \ncvsup.no.openbsd.org.         CNAME  \nanoncvs.nyc.openbsd.org.      CNAME  \nftp.nyc.openbsd.org.          CNAME  \nops.openbsd.org.              A       199.185.137.129                  \npf.openbsd.org.               A       199.185.136.128                  \npf.openbsd.org.               A       199.185.137.128                  \npf.openbsd.org.               A       199.185.231.128                  \npf.openbsd.org.               A       207.153.1.26                     \nanoncvs.pl.openbsd.org.       CNAME  \nanoncvs1.pl.openbsd.org.      CNAME  \npmax.openbsd.org.             A       199.185.137.52                   \nports.openbsd.org.            CNAME  \nalpha.ports.openbsd.org.      A       199.185.231.77                   \namd64.ports.openbsd.org.      A       199.185.231.80                   \narmish.ports.openbsd.org.     A       199.185.231.155                  \ncvs.ports.openbsd.org.        CNAME  \nhppa.ports.openbsd.org.       A       199.185.231.78                   \ni386.ports.openbsd.org.       A       199.185.231.6                    \nlandisk.ports.openbsd.org.    A       199.185.231.81                   \nm68k.ports.openbsd.org.       A       199.185.231.7                    \nmacppc.ports.openbsd.org.     A       199.185.231.8                    \nserial.ports.openbsd.org.     A       199.185.231.111                  \nsgi.ports.openbsd.org.        A       199.185.231.99                   \nsparc.ports.openbsd.org.      A       199.185.231.5                    \nsparc-..ports.openbsd.org.    CNAME  \nsparc-1.ports.openbsd.org.    A       199.185.231.20                   \nsparc-2.ports.openbsd.org.    A       199.185.231.21                   \nsparc-3.ports.openbsd.org.    A       199.185.231.22                   \nsparc64.ports.openbsd.org.    A       199.185.231.94                   \nsparc64-..ports.openbsd.org.  CNAME  \nsparc64-1.ports.openbsd.org.  A       199.185.231.95                   \nsparc64-2.ports.openbsd.org.  A       199.185.231.96                   \nsparc64-3.ports.openbsd.org.  A       199.185.231.97                   \nsparc64-4.ports.openbsd.org.  A       199.185.231.98                   \nvax.ports.openbsd.org.        A       199.185.231.79                   \nzaurus.ports.openbsd.org.     A       199.185.231.50                   \ncvsup.pt.openbsd.org.         CNAME  \nftp.ro.openbsd.org.           CNAME  \nftp1.ro.openbsd.org.          CNAME  \nanoncvs.se.openbsd.org.       CNAME  \nanoncvs1.se.openbsd.org.      CNAME  \nctm.se.openbsd.org.           CNAME  \nftp.se.openbsd.org.           CNAME  \nftp1.se.openbsd.org.          CNAME  \nserial.openbsd.org.           A       199.185.137.111                  \nsgi.openbsd.org.              A       199.185.137.99                   \nsparc.openbsd.org.            A       199.185.137.92                   \nsparc64.openbsd.org.          A       199.185.137.94                   \ntest.openbsd.org.             A       199.185.137.17                   \ntest2.openbsd.org.            A       199.185.137.18                   \ntest3.openbsd.org.            A       199.185.137.19                   \ntest4.openbsd.org.            A       199.185.137.20                   \nftp.th.openbsd.org.           CNAME  \nftp1.th.openbsd.org.          CNAME  \nwww.tr.openbsd.org.           CNAME  \nanoncvs.tw.openbsd.org.       CNAME  \nanoncvs1.tw.openbsd.org.      CNAME  \ncvsup.tw.openbsd.org.         A       140.113.17.208                   \nftp.tw.openbsd.org.           CNAME  \nftp1.tw.openbsd.org.          CNAME  \nwww.tw.openbsd.org.           CNAME  \nu.openbsd.org.                A       199.185.136.4                    \nu.openbsd.org.                MX      cvs.openbsd.org.                 \ncvsup.uk.openbsd.org.         A       194.242.139.171                  \nanoncvs.usa.openbsd.org.      CNAME  \nanoncvs1.usa.openbsd.org.     CNAME  \nanoncvs2.usa.openbsd.org.     CNAME  \nanoncvs3.usa.openbsd.org.     CNAME  \nanoncvs4.usa.openbsd.org.     CNAME  \nanoncvs5.usa.openbsd.org.     CNAME  \nanoncvs6.usa.openbsd.org.     CNAME  \ncvsup.usa.openbsd.org.        A       128.46.156.46                    \nftp.usa.openbsd.org.          CNAME  \nftp1.usa.openbsd.org.         CNAME  \nftp2.usa.openbsd.org.         CNAME  \nftp3.usa.openbsd.org.         CNAME  \nftp5.usa.openbsd.org.         CNAME  \nftp6.usa.openbsd.org.         CNAME  \nwww.usa.openbsd.org.          A       198.175.14.3                     \nv.openbsd.org.                A       199.185.136.2                    \nv.openbsd.org.                MX      cvs.openbsd.org.                 \nvax.openbsd.org.              A       199.185.137.78                   \nw.openbsd.org.                A       199.185.136.3                    \nw.openbsd.org.                MX      cvs.openbsd.org.                 \nwww.openbsd.org.              A       129.128.5.191                    \nx.openbsd.org.                A       199.185.136.5                    \nx.openbsd.org.                MX      cvs.openbsd.org.                 \nzaurus.openbsd.org.           A       199.185.137.50                   \nzeus.openbsd.org.             CNAME  \nopenbsd.org.                  SOA     zeus.theos.com. root.theos.com.  \n"}], "service": "domain", "state": "open", "version": "9.X"}, {"portid": "80", "product": "Apache httpd", "proto": "tcp", "scripts_arr": [{"id": "robots.txt", "output": "/cgi-bin/ /faq/new/ \n/donations.html "}, {"id": "HTML title", "output": "OpenBSD"}], "service": "http", "state": "open", "version": null}, {"portid": "7326", "product": null, "proto": "tcp", "scripts_arr": [], "service": "icb", "state": "open", "version": null}]}, "id": "199.185.137.3", "image": "./ngf_icons/Unknown.png", "label": "cvs.openbsd.org [5]", "shape": "image"}, {"color": "#97c2fc", "font": {"color": "#FFFFFF"}, "host_info": {"hostname": "www.netbsd.org", "ip": "204.152.190.12", "os": "Apple AirPort Extreme WAP (runs NetBSD)", "ports": [{"portid": "22", "product": "OpenSSH", "proto": "tcp", "scripts_arr": [], "service": "ssh", "state": "open", "version": "4.4"}, {"portid": "25", "product": "Postfix smtpd", "proto": "tcp", "scripts_arr": [{"id": "SMTP", "output": "HELP with errors or timeout.  Enable --script-trace to see what is happening."}], "service": "smtp", "state": "open", "version": null}, {"portid": "80", "product": "Apache httpd", "proto": "tcp", "scripts_arr": [{"id": "HTML title", "output": "The NetBSD Project"}], "service": "http", "state": "open", "version": "2.0.61"}, {"portid": "443", "product": "Apache httpd", "proto": "tcp", "scripts_arr": [{"id": "HTML title", "output": "400 Bad Request"}, {"id": "SSLv2", "output": "server still supports SSLv2\n\tSSL2_DES_192_EDE3_CBC_WITH_MD5\n\tSSL2_IDEA_128_CBC_WITH_MD5\n\tSSL2_RC2_CBC_128_CBC_WITH_MD5\n\tSSL2_RC4_128_WITH_MD5\n\tSSL2_DES_64_CBC_WITH_MD5\n\tSSL2_RC2_CBC_128_CBC_WITH_MD5\n\tSSL2_RC4_128_EXPORT40_WITH_MD5\n"}], "service": "http", "state": "open", "version": "2.0.61"}, {"portid": "871", "product": null, "proto": "tcp", "scripts_arr": [], "service": "supfilesrv", "state": "open", "version": null}, {"portid": "874", "product": null, "proto": "tcp", "scripts_arr": [], "service": "rsync", "state": "open", "version": null}, {"portid": "1720", "product": null, "proto": "tcp", "scripts_arr": [], "service": "H.323/Q.931", "state": "filtered", "version": null}, {"portid": "1984", "product": null, "proto": "tcp", "scripts_arr": [], "service": "tcpwrapped", "state": "open", "version": null}, {"portid": "2022", "product": "OpenSSH", "proto": "tcp", "scripts_arr": [], "service": "ssh", "state": "open", "version": "4.4"}]}, "id": "204.152.190.12", "image": "./ngf_icons/Unknown.png", "label": "www.netbsd.org [9]", "shape": "image"}, {"color": "#97c2fc", "font": {"color": "#FFFFFF"}, "host_info": {"hostname": "eh-in-f99.google.com", "ip": "72.14.207.99", "os": null, "ports": [{"portid": "80", "product": "Google httpd", "proto": "tcp", "scripts_arr": [{"id": "HTML title", "output": "302 Moved"}], "service": "http", "state": "open", "version": "1.3"}, {"portid": "113", "product": null, "proto": "tcp", "scripts_arr": [], "service": "auth", "state": "closed", "version": null}, {"portid": "179", "product": null, "proto": "tcp", "scripts_arr": [], "service": "bgp", "state": "closed", "version": null}, {"portid": "443", "product": "Google httpd", "proto": "tcp", "scripts_arr": [{"id": "SSLv2", "output": "server still supports SSLv2\n\tSSL2_DES_192_EDE3_CBC_WITH_MD5\n\tSSL2_RC2_CBC_128_CBC_WITH_MD5\n\tSSL2_RC4_128_WITH_MD5\n\tSSL2_DES_64_CBC_WITH_MD5\n\tSSL2_RC2_CBC_128_CBC_WITH_MD5\n\tSSL2_RC4_128_EXPORT40_WITH_MD5\n"}, {"id": "HTML title", "output": "302 Moved"}], "service": "http", "state": "open", "version": "1.3"}]}, "id": "72.14.207.99", "image": "./ngf_icons/Unknown.png", "label": "eh-in-f99.google.com [4]", "shape": "image"}, {"color": "#97c2fc", "font": {"color": "#FFFFFF"}, "host_info": {"hostname": "po-in-f83.google.com", "ip": "72.14.253.83", "os": null, "ports": [{"portid": "80", "product": "Google httpd", "proto": "tcp", "scripts_arr": [{"id": "HTML title", "output": "302 Moved"}, {"id": "robots.txt", "output": "/news?output=xhtml\u0026 /search /groups /images \n/catalogs /catalogues /news /nwshp /? /addurl/image? \n/pagead/ /relpage/ /relcontent /sorry/ /imgres \n/keyword/ /u/ /univ/ /cobrand /custom \n/advanced_group_search /advanced_search /googlesite /preferences \n/setprefs /swr /url /default /m? /m/search? /wml? \n/wml/search? /xhtml? /xhtml/search? /xml? /imode? \n/imode/search? /jsky? /jsky/search? /pda? /pda/search? \n/sprint_xhtml /sprint_wml /pqa /palm /gwt/ /purchases /hws \n/bsd? /linux? /mac? /microsoft? /unclesam? \n/answers/search?q= /local? /local_url /froogle? /products? \n/froogle_ /product_ /products_ /print /books /patents? \n/scholar? /complete /sponsoredlinks /videosearch? \n/videopreview? /videoprograminfo? /maps? /mapstt? /mapslt? \n/translate? /ie? /sms/demo? /katrina? /blogsearch? \n/blogsearch/ /blogsearch_feeds /advanced_blog_search \n/reader/ /uds/ /chart? /transit? /mbd? /extern_js/ \n/calendar/feeds/ /calendar/ical/ /cl2/feeds/ /cl2/ical/ \n/coop/directory /coop/manage /trends? /trends/music? \n/notebook/search? /music /browsersync /call /archivesearch? \n/archivesearch/url /archivesearch/advanced_search \n/base/search? /base/reportbadoffer /base/s2 \n/urchin_test/ /movies? /codesearch? \n/codesearch/feeds/search? /wapsearch? /safebrowsing /reviews/search? \n/orkut/albums /jsapi /views? /c/ /cbk \n/recharge/dashboard/car /recharge/dashboard/static/ /translate_c? \n/s2 /transconsole/portal/ /gcc/ /aclk /cse? \n/tbproxy/ "}], "service": "http", "state": "open", "version": "1.3"}, {"portid": "113", "product": null, "proto": "tcp", "scripts_arr": [], "service": "auth", "state": "closed", "version": null}, {"portid": "179", "product": null, "proto": "tcp", "scripts_arr": [], "service": "bgp", "state": "closed", "version": null}, {"portid": "443", "product": null, "proto": "tcp", "scripts_arr": [{"id": "HTML title", "output": "302 Moved"}, {"id": "SSLv2", "output": "server still supports SSLv2\n\tSSL2_DES_192_EDE3_CBC_WITH_MD5\n\tSSL2_RC2_CBC_128_CBC_WITH_MD5\n\tSSL2_RC4_128_WITH_MD5\n\tSSL2_DES_64_CBC_WITH_MD5\n\tSSL2_RC2_CBC_128_CBC_WITH_MD5\n\tSSL2_RC4_128_EXPORT40_WITH_MD5\n"}], "service": "https", "state": "open", "version": null}]}, "id": "72.14.253.83", "image": "./ngf_icons/Unknown.png", "label": "po-in-f83.google.com [4]", "shape": "image"}]);
+          edges = new vis.DataSet([]);
+
+          nodeColors = {};
+          allNodes = nodes.get({ returnType: "Object" });
+          for (nodeId in allNodes) {
+            nodeColors[nodeId] = allNodes[nodeId].color;
+          }
+          allEdges = edges.get({ returnType: "Object" });
+          // adding nodes and edges to the graph
+          data = {nodes: nodes, edges: edges};
+
+          var options = {"nodes": {"shape": "dot", "size": 30, "font": {"size": 14}}, "edges": {"smooth": false, "color": {"inherit": true}}, "physics": {"enabled": true, "solver": "barnesHut", "barnesHut": {"gravitationalConstant": -2500, "centralGravity": 0.2, "springLength": 230, "springConstant": 0.04, "damping": 0.25, "avoidOverlap": 1}, "stabilization": {"enabled": true, "iterations": 2000, "updateInterval": 50, "fit": true}, "minVelocity": 0.1}};
+
+          
+
+
+          
+
+          network = new vis.Network(container, data, options);
+
+          
+
+          
+
+          
+
+
+          
+
+          return network;
+
+      }
+      drawGraph();
+
+      // ══════════════════════════════════════════
+      //  HOST SIDEBAR
+      // ══════════════════════════════════════════
+      (function() {
+          var hostData = [];
+          nodes.forEach(function(n) {
+              if (n.host_info) hostData.push(n.host_info);
+          });
+
+          var listEl     = document.getElementById('host-list');
+          var detailEl   = document.getElementById('host-detail');
+          var detailIp   = document.getElementById('detail-ip');
+          var detailBody = document.getElementById('detail-body');
+          var countEl    = document.getElementById('host-count');
+          var closeBtn   = document.getElementById('detail-close');
+          var activeBtn  = null;
+
+          // Build host index by IP for fast lookup on node click
+          var hostByIp = {};
+          hostData.forEach(function(h) { hostByIp[h.ip] = h; });
+
+          if (!hostData.length) return;
+
+          countEl.textContent = hostData.length + ' host' + (hostData.length !== 1 ? 's' : '');
+          listEl.innerHTML = '';
+
+          hostData.forEach(function(host) {
+              var openPorts  = (host.ports || []).filter(function(p){ return p.state === 'open'; }).length;
+              var totalPorts = (host.ports || []).length;
+
+              var btn = document.createElement('button');
+              btn.className = 'host-btn';
+              btn.dataset.ip = host.ip;
+              btn.innerHTML =
+              '<div class="hb-hostname" title="' + escHtml(host.hostname || '—') + '">' + escHtml(host.hostname || '—') + '</div>' +
+                  '<div class="hb-ip">' + escHtml(host.ip) + '</div>' +
+                  '<div class="hb-meta">' +
+                      '<span class="hb-badge os">' + escHtml(host.os || 'Unknown OS') + '</span>' +
+                      '<span class="hb-badge ports">' + openPorts + '/' + totalPorts + ' open</span>' +
+                  '</div>';
+
+              btn.addEventListener('click', function() {
+                  if (activeBtn === btn) { collapseDetail(); return; }
+                  if (activeBtn) activeBtn.classList.remove('active');
+                  activeBtn = btn;
+                  btn.classList.add('active');
+                  expandDetail(host);
+                  try {
+                      network.selectNodes([host.ip]);
+                      network.focus(host.ip, { scale: 1.2, animation: { duration: 400, easingFunction: 'easeInOutQuad' } });
+                  } catch(e) {}
+              });
+
+              listEl.appendChild(btn);
+          });
+
+          // ── Back / close button ──
+          closeBtn.addEventListener('click', collapseDetail);
+
+          // ── Network node click ──
+          network.on('click', function(params) {
+              if (params.nodes.length > 0) {
+                  var nodeId = String(params.nodes[0]);
+                  var node   = nodes.get(nodeId);
+                  var host   = (node && node.host_info) ? node.host_info : hostByIp[nodeId];
+                  if (host) {
+                      // Deactivate sidebar button highlight
+                      if (activeBtn) activeBtn.classList.remove('active');
+                      var matchBtn = listEl.querySelector('[data-ip="' + host.ip + '"]');
+                      if (matchBtn) { matchBtn.classList.add('active'); activeBtn = matchBtn; }
+                      expandDetail(host);
+                  }
+              } else {
+                  // Clicked background — collapse back to list
+                  collapseDetail();
+              }
+          });
+
+          // ── Helpers ──
+          function expandDetail(host) {
+              listEl.style.display  = 'none';
+              detailEl.style.display = 'flex';
+              renderDetail(host);
+          }
+
+          function collapseDetail() {
+              listEl.style.display  = '';
+              detailEl.style.display = 'none';
+              if (activeBtn) { activeBtn.classList.remove('active'); activeBtn = null; }
+              try { network.unselectAll(); } catch(e) {}
+          }
+
+          function renderDetail(host) {
+              detailIp.textContent = host.hostname;
+              detailBody.innerHTML = '';
+
+              // ── Summary bar ──
+              var summary = document.createElement('div');
+              summary.style.cssText = 'font-size:13px;color:#f0b429;margin-bottom:10px;line-height:1.9;padding:4px 2px;';
+              var openCount = (host.ports || []).filter(function(p){ return p.state === 'open'; }).length;
+              summary.innerHTML =
+                  '<b style="color:#adb5bd">Hostname:</b> ' + escHtml(host.hostname || '—') + '&nbsp;&nbsp;' +
+                  '<b style="color:#adb5bd">OS:</b> '       + escHtml(host.os || 'Unknown')  + '&nbsp;&nbsp;' +
+                  '<b style="color:#adb5bd">Ports:</b> '    +
+                      '<span style="color:#6fcf97;font-weight:700;">' + openCount + ' open</span>' +
+                      ' / ' + (host.ports || []).length + ' total';
+              detailBody.appendChild(summary);
+
+              if (!(host.ports || []).length) {
+                  var none = document.createElement('div');
+                  none.style.cssText = 'color:#6c757d;font-size:12px;padding:8px 2px;';
+                  none.textContent = 'No port data available.';
+                  detailBody.appendChild(none);
+                  return;
+              }
+
+              // ── nmap-xslt style table ──
+              var table = document.createElement('table');
+              table.className = 'port-table';
+
+              // header
+              table.innerHTML =
+                  '<thead><tr>' +
+                      '<th class="pt-col-port"   title="Port">Port</th>'    +
+                      '<th class="pt-col-proto"  title="Protocol">Proto</th>' +
+                      '<th class="pt-col-state"  title="State">State</th>'  +
+                      '<th class="pt-col-service"title="Service">Service</th>' +
+                      '<th class="pt-col-product"title="Product">Product</th>' +
+                      '<th class="pt-col-version"title="Version">Version</th>' +
+                  '</tr></thead>';
+
+              var tbody = document.createElement('tbody');
+
+              (host.ports || []).forEach(function(port) {
+                  var state  = (port.state  || 'filtered').toLowerCase();
+                  var stateClass = 'pt-state-' + (state === 'open' ? 'open' : state === 'closed' ? 'closed' : 'filtered');
+                  var rowClass   = 'pt-port-row state-' + (state === 'open' ? 'open' : state === 'closed' ? 'closed' : 'filtered');
+
+                  // main port row
+                  var tr = document.createElement('tr');
+                  tr.className = rowClass;
+                  tr.innerHTML =
+                      '<td><span class="pt-port-num">'   + escHtml(port.portid)        + '</span></td>' +
+                      '<td><span class="pt-proto-badge">'+ escHtml(port.proto  || '')  + '</span></td>' +
+                      '<td><span class="' + stateClass +'">'+ escHtml(port.state || '') + '</span></td>' +
+                      '<td>'                             + escHtml(port.service || '') + '</td>'        +
+                      '<td>'                             + escHtml(port.product || '') + '</td>'        +
+                      '<td>'                             + escHtml(port.version || '') + '</td>';
+                  tbody.appendChild(tr);
+
+                  // one row per script
+                  (port.scripts_arr || []).forEach(function(s) {
+                      var sr = document.createElement('tr');
+                      sr.className = 'pt-script-row';
+                      sr.innerHTML =
+                          '<td colspan="2" style="padding:0;">' +
+                              '<span class="pt-script-id">' + escHtml(s.id) + '</span>' +
+                          '</td>' +
+                          '<td colspan="6" style="padding:0;">' +
+                              '<span class="pt-script-output">' + escHtml(s.output || '') + '</span>' +
+                          '</td>';
+                      tbody.appendChild(sr);
+                  });
+              });
+
+              table.appendChild(tbody);
+              detailBody.appendChild(table);
+          }
+
+          function escHtml(str) {
+              return String(str)
+                  .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                  .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+          }
+      })();
+
+      // ══════════════════════════════════════════
+      //  SIDEBAR RESIZE
+      // ══════════════════════════════════════════
+      (function() {
+          var resizer = document.getElementById('sidebar-resizer');
+          var sidebar = document.getElementById('host-sidebar');
+          var wrapper = document.getElementById('page-wrapper');
+          var startX, startW;
+
+          resizer.addEventListener('mousedown', function(e) {
+              startX = e.clientX;
+              startW = sidebar.getBoundingClientRect().width;
+              resizer.classList.add('dragging');
+              document.body.style.cursor = 'col-resize';
+              document.body.style.userSelect = 'none';
+              e.preventDefault();
+          });
+
+          document.addEventListener('mousemove', function(e) {
+              if (!resizer.classList.contains('dragging')) return;
+              var dx   = e.clientX - startX;
+              var maxW = wrapper.getBoundingClientRect().width * 0.80;
+              var newW = Math.min(Math.max(startW + dx, 200), maxW);
+              sidebar.style.width    = newW + 'px';
+              sidebar.style.minWidth = newW + 'px';
+              if (typeof network !== 'undefined' && network) {
+                  try { network.redraw(); } catch(err) {}
+              }
+          });
+
+          document.addEventListener('mouseup', function() {
+              if (!resizer.classList.contains('dragging')) return;
+              resizer.classList.remove('dragging');
+              document.body.style.cursor    = '';
+              document.body.style.userSelect = '';
+              if (typeof network !== 'undefined' && network) {
+                  try { network.fit(); } catch(err) {}
+              }
+          });
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1188 @@
+<html>
+  <head>
+    <title>Nmap Graph</title>
+    <meta charset="utf-8" />
+    {% if cdn_resources=="local" %}
+    <script src="lib/bindings/utils.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css"
+      integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js"
+      integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    {% if select_menu or filter_menu %}
+    <link href="lib/tom-select/tom-select.css" rel="stylesheet" />
+    <script src="lib/tom-select/tom-select.complete.min.js"></script>
+    {% endif %} {% elif cdn_resources=="in_line" %}
+    <script>
+      {%  include 'lib/bindings/utils.js' %}
+    </script>
+    <style>
+      {%  include 'lib/vis-9.1.2/vis-network.css' %}
+    </style>
+    <script>
+      {%  include 'lib/vis-9.1.2/vis-network.min.js' %}
+    </script>
+    {% if select_menu or filter_menu %}
+    <style>
+      {%  include 'lib/tom-select/tom-select.css' %}
+    </style>
+    <script>
+      {%  include 'lib/tom-select/tom-select.complete.min.js' %}
+    </script>
+    {% endif %} {% elif cdn_resources=="remote" %}
+    <script>
+      {%  include 'lib/bindings/utils.js' %}
+    </script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css"
+      integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js"
+      integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    {#
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.0.4/dist/dist/vis-network.min.css"
+      integrity="sha512-+5tJeVsSE2tSnmKB5SWOD0GsYA5dOP0B/FSv7I2GYhdOcyjJq81Q1St3qgJgInwreAdNuw0KGJ0FOaxOJ0E4yw=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    #} {#
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.0.4/dist/vis-network.js"
+      #}
+      {#
+      integrity="sha512-CEbUhbSq35hCqBH8ckfAkH1Tcua5NEywtEzwiJ+BUC4EIZkC7vyta3ivZu/WqJhK1qHTurO3hwHsErU3HHjwIA=="
+      #}
+      {#
+      crossorigin="anonymous"
+      #}
+      {#
+      referrerpolicy="no-referrer"
+    ></script>
+    #} {% if select_menu or filter_menu %}
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.0.0-rc.4/css/tom-select.min.css"
+      integrity="sha512-43fHB3GLgZfz8QXl1RPQ8O66oIgv3po9cJ5erMt1c4QISq9dYb195T3vr5ImnJPXuVroKcGBPXBFKETW8jrPNQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.0.0-rc.4/js/tom-select.complete.js"
+      integrity="sha512-jeF9CfnvzDiw9G9xiksVjxR2lib44Gnovvkv+3CgCG6NXCD4gqlA5nDAVW5WjpA+i+/zKsUWV5xNEbW1X/HH0Q=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    {% endif %} {% endif %}
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+      crossorigin="anonymous"
+    ></script>
+
+    <style type="text/css">
+
+         html, body {
+             height: 100%;
+             margin: 0;
+             padding: 0;
+             overflow: hidden;
+         }
+
+         body {
+             display: flex;
+             flex-direction: column;
+         }
+
+         #mynetwork {
+             /* pyvis injects width/height — override both so it fills flex parent */
+             width: 100% !important;
+             height: 100% !important;
+             background-color: {{bgcolor}};
+             border: none;
+             position: relative;
+             flex: 1 1 auto;
+             min-width: 0;
+         }
+
+         {% if nodes|length > 100 and physics_enabled %}
+         #loadingBar {
+             position:absolute;
+             top:0px;
+             left:0px;
+             width: {{width}};
+             height: {{height}};
+             background-color:rgba(200,200,200,0.8);
+             -webkit-transition: all 0.5s ease;
+             -moz-transition: all 0.5s ease;
+             -ms-transition: all 0.5s ease;
+             -o-transition: all 0.5s ease;
+             transition: all 0.5s ease;
+             opacity:1;
+         }
+
+         #bar {
+             position:absolute;
+             top:0px;
+             left:0px;
+             width:20px;
+             height:20px;
+             margin:auto auto auto auto;
+             border-radius:11px;
+             border:2px solid rgba(30,30,30,0.05);
+             background: rgb(0, 173, 246); /* Old browsers */
+             box-shadow: 2px 0px 4px rgba(0,0,0,0.4);
+         }
+
+         #border {
+             position:absolute;
+             top:10px;
+             left:10px;
+             width:500px;
+             height:23px;
+             margin:auto auto auto auto;
+             box-shadow: 0px 0px 4px rgba(0,0,0,0.2);
+             border-radius:10px;
+         }
+
+         #text {
+             position:absolute;
+             top:8px;
+             left:530px;
+             width:30px;
+             height:50px;
+             margin:auto auto auto auto;
+             font-size:22px;
+             color: #000000;
+         }
+
+         div.outerBorder {
+             position:relative;
+             top:400px;
+             width:600px;
+             height:44px;
+             margin:auto auto auto auto;
+             border:8px solid rgba(0,0,0,0.1);
+             background: rgb(252,252,252); /* Old browsers */
+             background: -moz-linear-gradient(top,  rgba(252,252,252,1) 0%, rgba(237,237,237,1) 100%); /* FF3.6+ */
+             background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(252,252,252,1)), color-stop(100%,rgba(237,237,237,1))); /* Chrome,Safari4+ */
+             background: -webkit-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Chrome10+,Safari5.1+ */
+             background: -o-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Opera 11.10+ */
+             background: -ms-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* IE10+ */
+             background: linear-gradient(to bottom,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* W3C */
+             filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fcfcfc', endColorstr='#ededed',GradientType=0 ); /* IE6-9 */
+             border-radius:72px;
+             box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+         }
+         {% endif %}
+
+         {% if conf %}
+         #config {
+             float: left;
+             width: 400px;
+             height: 600px;
+         }
+         {% endif %}
+
+         /* ── Layout ── */
+         #page-wrapper {
+             display: flex;
+             align-items: stretch;
+             flex: 1 1 auto;
+             min-height: 0;
+             overflow: hidden;
+         }
+
+         #host-sidebar {
+             width: 600px;
+             min-width: 200px;
+             max-width: 80vw;
+             background: #272b30;
+             display: flex;
+             flex-direction: column;
+             overflow: hidden;
+             font-family: 'Segoe UI', system-ui, sans-serif;
+             flex-shrink: 0;
+         }
+
+         /* ── Drag-to-resize handle ── */
+         #sidebar-resizer {
+             width: 5px;
+             min-width: 5px;
+             background: #495057;
+             cursor: col-resize;
+             flex-shrink: 0;
+             position: relative;
+             transition: background .15s;
+             z-index: 10;
+         }
+
+         #sidebar-resizer:hover,
+         #sidebar-resizer.dragging {
+             background: #f0b429;
+         }
+
+         #sidebar-resizer::after {
+             content: '';
+             position: absolute;
+             top: 50%;
+             left: 50%;
+             transform: translate(-50%, -50%);
+             width: 1px;
+             height: 32px;
+             background: rgba(255,255,255,.18);
+             border-radius: 1px;
+         }
+
+         #sidebar-header {
+             padding: 14px 16px;
+             background: #272b30;
+             border-bottom: 1px solid #495057;
+             font-size: 13px;
+             font-weight: 600;
+             color: #a0a8c0;
+             letter-spacing: .06em;
+             text-transform: uppercase;
+             display: flex;
+             align-items: center;
+             gap: 8px;
+         }
+
+         #sidebar-header svg { flex-shrink: 0; }
+
+         #host-list {
+             overflow-y: auto;
+             flex: 1;
+             padding: 8px;
+             display: flex;
+             flex-direction: column;
+             gap: 6px;
+         }
+
+         #host-list::-webkit-scrollbar { width: 5px; }
+         #host-list::-webkit-scrollbar-track { background: transparent; }
+         #host-list::-webkit-scrollbar-thumb { background: #495057; border-radius: 3px; }
+
+         .host-btn {
+             width: 100%;
+             background: #2b3035;
+             border: 1px solid #495057;
+             padding: 10px 12px;
+             cursor: pointer;
+             text-align: left;
+             color: #c8d0e8;
+             transition: background .15s, border-color .15s;
+         }
+
+         .host-btn:hover { background: #3f464d; border-color: #6c757d; }
+         .host-btn.active { background: #495057; border-color: #adb5bd; }
+
+         .host-btn .hb-ip {
+             font-size: 11px;
+             color: #adb5bd;
+             font-weight: 700;
+             font-family: 'Cascadia Code', 'Fira Code', monospace;
+         }
+
+         .host-btn .hb-hostname {
+             font-size: 17px;
+             color: #f8f9fa;
+             margin-top: 2px;
+             white-space: nowrap;
+             overflow: hidden;
+             text-overflow: ellipsis;
+         }
+
+         .host-btn .hb-meta {
+             display: flex;
+             gap: 10px;
+             margin-top: 6px;
+         }
+
+         .hb-badge {
+             font-size: 13px;
+             padding: 2px 7px;
+             font-weight: 600;
+             background: #495057;
+             color: #dee2e6;
+         }
+
+         .hb-badge.os  { background: #4d453f; color: #ced4da; }
+         .hb-badge.ports { background: #495057; color: #f8f9fa; }
+
+         /* ── Detail Panel ── */
+         #host-detail {
+             display: none;
+             border-top: 1px solid #495057;
+             background: #2b3035;
+             flex-direction: column;
+             flex: 1 1 auto;
+             min-height: 0;
+             overflow: hidden;
+         }
+
+         #detail-header {
+             padding: 10px 14px;
+             display: flex;
+             align-items: center;
+             justify-content: space-between;
+             background: #2b3035;
+             border-bottom: 1px solid #495057;
+         }
+
+         #detail-header .dh-ip {
+             font-family: monospace;
+             font-size: 14px;
+             font-weight: 700;
+             color: #f8f9fa;
+         }
+
+         #detail-close {
+             background: none;
+             border: 1px solid #495057;
+             color: #adb5bd;
+             cursor: pointer;
+             font-size: 14px;
+             padding: 3px 8px;
+         }
+
+         #detail-close:hover { color: #f8f9fa; border-color: #adb5bd; }
+
+         #detail-body {
+             overflow-y: auto;
+             overflow-x: auto;
+             padding: 10px;
+             flex: 1;
+         }
+
+         #detail-body::-webkit-scrollbar { width: 5px; height: 5px; }
+         #detail-body::-webkit-scrollbar-track { background: transparent; }
+         #detail-body::-webkit-scrollbar-thumb { background: #495057; border-radius: 3px; }
+
+         /* ── nmap-xslt style port table ── */
+         .port-table {
+             /* auto layout: every column sizes to its content */
+             width: auto;
+             min-width: 100%;
+             border-collapse: collapse;
+             font-size: 12px;
+             margin-bottom: 10px;
+             table-layout: auto;
+             white-space: nowrap;   /* keep each cell on one line; body scrolls if needed */
+         }
+
+         .port-table thead tr {
+             background: #23272b;
+             color: #adb5bd;
+             font-size: 11px;
+             font-weight: 700;
+             text-transform: uppercase;
+             letter-spacing: .05em;
+         }
+
+         .port-table thead th {
+             padding: 6px 10px;
+             border: 1px solid #495057;
+             white-space: nowrap;
+         }
+
+         .port-table tbody tr.pt-port-row {
+             border-bottom: 1px solid #495057;
+             transition: background .12s;
+         }
+
+         .port-table tbody tr.pt-port-row:hover { background: #3d444b; }
+
+         .port-table tbody tr.pt-port-row.state-open    { background: #1a2e1a; }
+         .port-table tbody tr.pt-port-row.state-open:hover { background: #22381e; }
+         .port-table tbody tr.pt-port-row.state-closed   { background: #2e1a1a; }
+         .port-table tbody tr.pt-port-row.state-filtered { background: #2e2a14; }
+
+         .port-table td {
+             padding: 5px 10px;
+             border-right: 1px solid #3a4049;
+             color: #dee2e6;
+             vertical-align: top;
+             white-space: nowrap;
+         }
+
+         .pt-port-num {
+             font-family: 'Cascadia Code','Fira Code',monospace;
+             font-weight: 700;
+             color: #f8f9fa;
+             font-size: 13px;
+         }
+
+         .pt-proto-badge {
+             display: inline-block;
+             border-radius: 3px;
+             padding: 0 4px;
+             font-size: 13px;
+             font-weight: 600;
+         }
+
+         .pt-state-open     { font-weight: 700; }
+         .pt-state-closed   { color: #eb5757; font-weight: 700; }
+         .pt-state-filtered { color: #f0b429; font-weight: 700; }
+
+         /* script rows */
+         .port-table tbody tr.pt-script-row td {
+             background: #212529;
+             border-right: 1px solid #3a4049;
+             border-bottom: 1px solid #2c3136;
+             white-space: normal;   /* let long script output wrap */
+             padding: 0;
+         }
+
+         .pt-script-id {
+             display: block;
+             padding: 5px 8px;
+             font-size: 11px;
+             font-weight: 700;
+             color: #f0b429;
+             background: #1a1d21;
+             border-right: 1px solid #3a4049;
+             white-space: nowrap;
+         }
+
+         .pt-script-output {
+             display: block;
+             padding: 5px 8px;
+             font-family: 'Cascadia Code','Fira Code',monospace;
+             font-size: 11px;
+             color: #ced4da;
+             white-space: pre-wrap;
+             word-break: break-all;
+         }
+
+         {% if tooltip_link %}
+         /* position absolute is important and the container has to be relative or absolute as well. */
+      div.popup {
+             position:absolute;
+             top:0px;
+             left:0px;
+             display:none;
+             background-color:#f5f4ed;
+             -moz-border-radius: 3px;
+             -webkit-border-radius: 3px;
+             border-radius: 3px;
+             border: 1px solid #808074;
+             box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
+      }
+
+      /* hide the original tooltip */
+      .vis-tooltip {
+        display:none;
+      }
+         {% endif %}
+    </style>
+  </head>
+
+  <body>
+    <div
+      class="card"
+      style="
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        border: none;
+        border-radius: 0;
+        min-height: 0;
+        overflow: hidden;
+      "
+    >
+      {% if select_menu %}
+      <div id="select-menu" class="card-header">
+        <div class="row no-gutters">
+          <div class="col-10 pb-2">
+            <select
+              class="form-select"
+              aria-label="Default select example"
+              onchange="selectNode([value])"
+              id="select-node"
+              placeholder="Select node..."
+            >
+              <option selected>Select a Node by ID</option>
+              {% for node in nodes %}
+              <option value="{{ node.id }}">{{node.id}}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-2 pb-2">
+            <button
+              type="button"
+              class="btn btn-primary btn-block"
+              onclick="neighbourhoodHighlight({ nodes: [] })"
+            >
+              Reset Selection
+            </button>
+          </div>
+        </div>
+      </div>
+      {% endif %} {% if filter_menu %}
+      <div id="filter-menu" class="card-header">
+        <div class="row no-gutters">
+          <div class="col-3 pb-2">
+            <select
+              class="form-select"
+              aria-label="Default select example"
+              onchange="updateFilter(value, 'item')"
+              id="select-item"
+            >
+              <option value="">Select a network item</option>
+              <option value="edge">edge</option>
+              <option value="node">node</option>
+            </select>
+          </div>
+          <div class="col-3 pb-2">
+            <select
+              class="form-select"
+              aria-label="Default select example"
+              onchange="updateFilter(value, 'property')"
+              id="select-property"
+            >
+              <option value="">Select a property...</option>
+            </select>
+          </div>
+          <div class="col-3 pb-2">
+            <select
+              class="form-select"
+              aria-label="Default select example"
+              id="select-value"
+            >
+              <option value="">Select value(s)...</option>
+            </select>
+          </div>
+          <div class="col-1 pb-2">
+            <button
+              type="button"
+              class="btn btn-primary btn-block"
+              onclick="highlightFilter(filter)"
+            >
+              Filter
+            </button>
+          </div>
+          <div class="col-2 pb-2">
+            <button
+              type="button"
+              class="btn btn-primary btn-block"
+              onclick="clearFilter(true)"
+            >
+              Reset Selection
+            </button>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      <div id="page-wrapper">
+        
+
+        <!-- ══ HOST SIDEBAR ══ -->
+        <div id="host-sidebar">
+          <div id="sidebar-header">
+            <!-- <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#7eb8ff"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="2" y="3" width="20" height="14" rx="2" />
+              <path d="M8 21h8M12 17v4" />
+            </svg> -->
+            Hosts
+            <span
+              id="host-count"
+              style="
+                margin-left: auto;
+                font-size: 11px;
+                color: #919192;
+                font-weight: 400;
+              "
+            ></span>
+          </div>
+          <div id="host-list">
+            <div
+              style="
+                color: #555;
+                font-size: 12px;
+                text-align: center;
+                padding: 20px;
+              "
+            >
+              No host data provided<br />Pass
+              the XML nmap output to <code>ngf</code>.
+            </div>
+          </div>
+
+          <!-- Detail panel (shown on click) -->
+          <div id="host-detail">
+            <div id="detail-header">
+              <span class="dh-ip" id="detail-ip"></span>
+              <button id="detail-close" title="Back to hosts">← Back</button>
+            </div>
+            <div id="detail-body"></div>
+          </div>
+        </div>
+        <div id="sidebar-resizer" title="Drag to resize"></div>
+        <div id="mynetwork" class="card-body"></div>
+      </div>
+    </div>
+
+    {% if nodes|length > 100 and physics_enabled %}
+    <div id="loadingBar">
+      <div class="outerBorder">
+        <div id="text">0%</div>
+        <div id="border">
+          <div id="bar"></div>
+        </div>
+      </div>
+    </div>
+    {% endif %} {% if conf %}
+    <div id="config"></div>
+    {% endif %}
+
+    <script type="text/javascript">
+
+      // initialize global variables.
+      var edges;
+      var nodes;
+      var allNodes;
+      var allEdges;
+      var nodeColors;
+      var originalNodes;
+      var network;
+      var container;
+      var options, data;
+      var filter = {
+          item : '',
+          property : '',
+          value : []
+      };
+
+      {% if select_menu %}
+          new TomSelect("#select-node",{
+              create: false,
+              sortField: {
+                  field: "text",
+                  direction: "asc"
+              }
+          });
+      {%  endif %}
+
+      {% if filter_menu %}
+          // explicitly using onItemAdd and this function as we need to save multiple values
+          let updateValueFilter = function() {
+              return function () {
+              filter['value'].push(arguments[0])
+              }
+          }
+
+          let valueControl = new TomSelect("#select-value",{
+              maxItems: null,
+              valueField: 'id',
+              labelField: 'title',
+              searchField: 'title',
+              create: false,
+              sortField: {
+                  field: "text",
+                  direction: "asc"
+              },
+              onItemAdd: updateValueFilter()
+          });
+
+          let addValues = function() {
+              return function () {
+                  // clear the current value options and add the selected attribute values
+                  // tom-select handles duplicates
+                  let selectedProperty = arguments[0];
+                  valueControl.clear();
+                  valueControl.clearOptions();
+                  filter['value'] = []
+                  if (filter['item'] === 'node') {
+                      for (let each in allNodes) {
+                          valueControl.addOption({
+                              id:allNodes[each][selectedProperty],
+                              title:allNodes[each][selectedProperty]
+                          })
+                      }
+                  }
+                  else if (filter['item'] === 'edge') {
+                      for (let each in allEdges) {
+                          valueControl.addOption({
+                              id:allEdges[each][selectedProperty],
+                              title:allEdges[each][selectedProperty]
+                          })
+                      }
+                  }
+              }
+          };
+
+          let propControl = new TomSelect("#select-property",{
+              valueField: 'id',
+              labelField: 'title',
+              searchField: 'title',
+              create: false,
+              sortField: {
+                  field: "text",
+                  direction: "asc"
+              },
+              onItemAdd: addValues()
+          });
+
+          let addProperties = function() {
+              return function () {
+                  // loops through the selected network item and adds the attributes to dropdown
+                  // tom-select handles duplicates
+                  clearFilter(false)
+                  if (arguments[0] === 'edge') {
+                      for (let each in allEdges) {
+                          if (allEdges.hasOwnProperty(each)) {
+                              for (let eachProp in allEdges[each]) {
+                                  if (allEdges[each].hasOwnProperty(eachProp)) {
+                                      propControl.addOption({id: eachProp, title: eachProp})
+                                  }
+                              }
+                          }
+                      }
+                  }
+                  else if (arguments[0] === 'node') {
+                      for (let each in allNodes) {
+                          if (allNodes.hasOwnProperty(each)) {
+                              for (let eachProp in allNodes[each]) {
+                                  if (allNodes[each].hasOwnProperty(eachProp)
+                                      && (eachProp !== 'hidden' && eachProp !== 'savedLabel'
+                                          && eachProp !== 'hiddenLabel')) {
+                                      propControl.addOption({id: eachProp, title: eachProp})
+
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+          };
+
+          let itemControl = new TomSelect("#select-item",{
+              create: false,
+              sortField:{
+                  field: "text",
+                  direction: "asc"
+              },
+              onItemAdd: addProperties()
+          });
+
+          function clearFilter(reset) {
+              // utility function to clear all the selected filter options
+              // if reset is set to true, the existing filter will be removed
+              // else, only the dropdown options are cleared
+              propControl.clear();
+              propControl.clearOptions();
+              valueControl.clear();
+              valueControl.clearOptions();
+              filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              }
+              if (reset) {
+                  itemControl.clear();
+                  filterHighlight({nodes: []})
+              }
+          }
+
+          function updateFilter(value, key) {
+              // key could be 'item' or 'property' and value is as selected in dropdown
+              filter[key] = value
+          }
+
+      {%  endif %}
+
+      // This method is responsible for drawing the graph, returns the drawn network
+      function drawGraph() {
+          var container = document.getElementById('mynetwork');
+
+          {% if use_DOT %}
+
+          var DOTstring = "{{dot_lang|safe}}";
+          var parsedData = vis.network.convertDot(DOTstring);
+
+          data = {
+            nodes: parsedData.nodes,
+            edges: parsedData.edges
+          }
+
+          var options = parsedData.options;
+          options.nodes = {
+              shape: "dot"
+          }
+
+          {% else %}
+
+          // parsing and collecting nodes and edges from the python
+          nodes = new vis.DataSet({{nodes|tojson}});
+          edges = new vis.DataSet({{edges|tojson}});
+
+          nodeColors = {};
+          allNodes = nodes.get({ returnType: "Object" });
+          for (nodeId in allNodes) {
+            nodeColors[nodeId] = allNodes[nodeId].color;
+          }
+          allEdges = edges.get({ returnType: "Object" });
+          // adding nodes and edges to the graph
+          data = {nodes: nodes, edges: edges};
+
+          var options = {{options|safe}};
+
+          {% endif %}
+
+
+          {% if conf %}
+          // if this network requires displaying the configure window,
+          // put it in its div
+          options.configure["container"] = document.getElementById("config");
+          {% endif %}
+
+          network = new vis.Network(container, data, options);
+
+          {% if neighborhood_highlight %}
+            network.on("click", neighbourhoodHighlight);
+          {% endif %}
+
+          {% if select_menu %}
+            network.on("selectNode", neighbourhoodHighlight);
+          {% endif %}
+
+          {% if tooltip_link %}
+          // make a custom popup
+              var popup = document.createElement("div");
+              popup.className = 'popup';
+              popupTimeout = null;
+              popup.addEventListener('mouseover', function () {
+                  console.log(popup)
+                  if (popupTimeout !== null) {
+                      clearTimeout(popupTimeout);
+                      popupTimeout = null;
+                  }
+              });
+              popup.addEventListener('mouseout', function () {
+                  if (popupTimeout === null) {
+                      hidePopup();
+                  }
+              });
+              container.appendChild(popup);
+
+
+              // use the popup event to show
+              network.on("showPopup", function (params) {
+                  showPopup(params);
+              });
+
+              // use the hide event to hide it
+              network.on("hidePopup", function (params) {
+                  hidePopup();
+              });
+
+              // hiding the popup through css
+              function hidePopup() {
+                  popupTimeout = setTimeout(function () { popup.style.display = 'none'; }, 500);
+              }
+
+              // showing the popup
+              function showPopup(nodeId) {
+                  // get the data from the vis.DataSet
+                  var nodeData = nodes.get([nodeId]);
+                  popup.innerHTML = nodeData[0].title;
+
+                  // get the position of the node
+                  var posCanvas = network.getPositions([nodeId])[nodeId];
+
+                  // get the bounding box of the node
+                  var boundingBox = network.getBoundingBox(nodeId);
+
+                  //position tooltip:
+                  posCanvas.x = posCanvas.x + 0.5 * (boundingBox.right - boundingBox.left);
+
+                  // convert coordinates to the DOM space
+                  var posDOM = network.canvasToDOM(posCanvas);
+
+                  // Give it an offset
+                  posDOM.x += 10;
+                  posDOM.y -= 20;
+
+                  // show and place the tooltip.
+                  popup.style.display = 'block';
+                  popup.style.top = posDOM.y + 'px';
+                  popup.style.left = posDOM.x + 'px';
+              }
+          {% endif %}
+
+
+          {% if nodes|length > 100 and physics_enabled %}
+              network.on("stabilizationProgress", function(params) {
+                  document.getElementById('loadingBar').removeAttribute("style");
+                  var maxWidth = 496;
+                  var minWidth = 20;
+                  var widthFactor = params.iterations/params.total;
+                  var width = Math.max(minWidth,maxWidth * widthFactor);
+                  document.getElementById('bar').style.width = width + 'px';
+                  document.getElementById('text').innerHTML = Math.round(widthFactor*100) + '%';
+              });
+              network.once("stabilizationIterationsDone", function() {
+                  document.getElementById('text').innerHTML = '100%';
+                  document.getElementById('bar').style.width = '496px';
+                  document.getElementById('loadingBar').style.opacity = 0;
+                  // really clean the dom element
+                  setTimeout(function () {document.getElementById('loadingBar').style.display = 'none';}, 500);
+              });
+          {% endif %}
+
+          return network;
+
+      }
+      drawGraph();
+
+      // ══════════════════════════════════════════
+      //  HOST SIDEBAR
+      // ══════════════════════════════════════════
+      (function() {
+          var hostData = [];
+          nodes.forEach(function(n) {
+              if (n.host_info) hostData.push(n.host_info);
+          });
+
+          var listEl     = document.getElementById('host-list');
+          var detailEl   = document.getElementById('host-detail');
+          var detailIp   = document.getElementById('detail-ip');
+          var detailBody = document.getElementById('detail-body');
+          var countEl    = document.getElementById('host-count');
+          var closeBtn   = document.getElementById('detail-close');
+          var activeBtn  = null;
+
+          // Build host index by IP for fast lookup on node click
+          var hostByIp = {};
+          hostData.forEach(function(h) { hostByIp[h.ip] = h; });
+
+          if (!hostData.length) return;
+
+          countEl.textContent = hostData.length + ' host' + (hostData.length !== 1 ? 's' : '');
+          listEl.innerHTML = '';
+
+          hostData.forEach(function(host) {
+              var openPorts  = (host.ports || []).filter(function(p){ return p.state === 'open'; }).length;
+              var totalPorts = (host.ports || []).length;
+
+              var btn = document.createElement('button');
+              btn.className = 'host-btn';
+              btn.dataset.ip = host.ip;
+              btn.innerHTML =
+              '<div class="hb-hostname" title="' + escHtml(host.hostname || '—') + '">' + escHtml(host.hostname || '—') + '</div>' +
+                  '<div class="hb-ip">' + escHtml(host.ip) + '</div>' +
+                  '<div class="hb-meta">' +
+                      '<span class="hb-badge os">' + escHtml(host.os || 'Unknown OS') + '</span>' +
+                      '<span class="hb-badge ports">' + openPorts + '/' + totalPorts + ' open</span>' +
+                  '</div>';
+
+              btn.addEventListener('click', function() {
+                  if (activeBtn === btn) { collapseDetail(); return; }
+                  if (activeBtn) activeBtn.classList.remove('active');
+                  activeBtn = btn;
+                  btn.classList.add('active');
+                  expandDetail(host);
+                  try {
+                      network.selectNodes([host.ip]);
+                      network.focus(host.ip, { scale: 1.2, animation: { duration: 400, easingFunction: 'easeInOutQuad' } });
+                  } catch(e) {}
+              });
+
+              listEl.appendChild(btn);
+          });
+
+          // ── Back / close button ──
+          closeBtn.addEventListener('click', collapseDetail);
+
+          // ── Network node click ──
+          network.on('click', function(params) {
+              if (params.nodes.length > 0) {
+                  var nodeId = String(params.nodes[0]);
+                  var node   = nodes.get(nodeId);
+                  var host   = (node && node.host_info) ? node.host_info : hostByIp[nodeId];
+                  if (host) {
+                      // Deactivate sidebar button highlight
+                      if (activeBtn) activeBtn.classList.remove('active');
+                      var matchBtn = listEl.querySelector('[data-ip="' + host.ip + '"]');
+                      if (matchBtn) { matchBtn.classList.add('active'); activeBtn = matchBtn; }
+                      expandDetail(host);
+                  }
+              } else {
+                  // Clicked background — collapse back to list
+                  collapseDetail();
+              }
+          });
+
+          // ── Helpers ──
+          function expandDetail(host) {
+              listEl.style.display  = 'none';
+              detailEl.style.display = 'flex';
+              renderDetail(host);
+          }
+
+          function collapseDetail() {
+              listEl.style.display  = '';
+              detailEl.style.display = 'none';
+              if (activeBtn) { activeBtn.classList.remove('active'); activeBtn = null; }
+              try { network.unselectAll(); } catch(e) {}
+          }
+
+          function renderDetail(host) {
+              detailIp.textContent = host.hostname;
+              detailBody.innerHTML = '';
+
+              // ── Summary bar ──
+              var summary = document.createElement('div');
+              summary.style.cssText = 'font-size:13px;color:#f0b429;margin-bottom:10px;line-height:1.9;padding:4px 2px;';
+              var openCount = (host.ports || []).filter(function(p){ return p.state === 'open'; }).length;
+              summary.innerHTML =
+                  '<b style="color:#adb5bd">Hostname:</b> ' + escHtml(host.hostname || '—') + '&nbsp;&nbsp;' +
+                  '<b style="color:#adb5bd">OS:</b> '       + escHtml(host.os || 'Unknown')  + '&nbsp;&nbsp;' +
+                  '<b style="color:#adb5bd">Ports:</b> '    +
+                      '<span style="color:#6fcf97;font-weight:700;">' + openCount + ' open</span>' +
+                      ' / ' + (host.ports || []).length + ' total';
+              detailBody.appendChild(summary);
+
+              if (!(host.ports || []).length) {
+                  var none = document.createElement('div');
+                  none.style.cssText = 'color:#6c757d;font-size:12px;padding:8px 2px;';
+                  none.textContent = 'No port data available.';
+                  detailBody.appendChild(none);
+                  return;
+              }
+
+              // ── nmap-xslt style table ──
+              var table = document.createElement('table');
+              table.className = 'port-table';
+
+              // header
+              table.innerHTML =
+                  '<thead><tr>' +
+                      '<th class="pt-col-port"   title="Port">Port</th>'    +
+                      '<th class="pt-col-proto"  title="Protocol">Proto</th>' +
+                      '<th class="pt-col-state"  title="State">State</th>'  +
+                      '<th class="pt-col-service"title="Service">Service</th>' +
+                      '<th class="pt-col-product"title="Product">Product</th>' +
+                      '<th class="pt-col-version"title="Version">Version</th>' +
+                  '</tr></thead>';
+
+              var tbody = document.createElement('tbody');
+
+              (host.ports || []).forEach(function(port) {
+                  var state  = (port.state  || 'filtered').toLowerCase();
+                  var stateClass = 'pt-state-' + (state === 'open' ? 'open' : state === 'closed' ? 'closed' : 'filtered');
+                  var rowClass   = 'pt-port-row state-' + (state === 'open' ? 'open' : state === 'closed' ? 'closed' : 'filtered');
+
+                  // main port row
+                  var tr = document.createElement('tr');
+                  tr.className = rowClass;
+                  tr.innerHTML =
+                      '<td><span class="pt-port-num">'   + escHtml(port.portid)        + '</span></td>' +
+                      '<td><span class="pt-proto-badge">'+ escHtml(port.proto  || '')  + '</span></td>' +
+                      '<td><span class="' + stateClass +'">'+ escHtml(port.state || '') + '</span></td>' +
+                      '<td>'                             + escHtml(port.service || '') + '</td>'        +
+                      '<td>'                             + escHtml(port.product || '') + '</td>'        +
+                      '<td>'                             + escHtml(port.version || '') + '</td>';
+                  tbody.appendChild(tr);
+
+                  // one row per script
+                  (port.scripts_arr || []).forEach(function(s) {
+                      var sr = document.createElement('tr');
+                      sr.className = 'pt-script-row';
+                      sr.innerHTML =
+                          '<td colspan="2" style="padding:0;">' +
+                              '<span class="pt-script-id">' + escHtml(s.id) + '</span>' +
+                          '</td>' +
+                          '<td colspan="6" style="padding:0;">' +
+                              '<span class="pt-script-output">' + escHtml(s.output || '') + '</span>' +
+                          '</td>';
+                      tbody.appendChild(sr);
+                  });
+              });
+
+              table.appendChild(tbody);
+              detailBody.appendChild(table);
+          }
+
+          function escHtml(str) {
+              return String(str)
+                  .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                  .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+          }
+      })();
+
+      // ══════════════════════════════════════════
+      //  SIDEBAR RESIZE
+      // ══════════════════════════════════════════
+      (function() {
+          var resizer = document.getElementById('sidebar-resizer');
+          var sidebar = document.getElementById('host-sidebar');
+          var wrapper = document.getElementById('page-wrapper');
+          var startX, startW;
+
+          resizer.addEventListener('mousedown', function(e) {
+              startX = e.clientX;
+              startW = sidebar.getBoundingClientRect().width;
+              resizer.classList.add('dragging');
+              document.body.style.cursor = 'col-resize';
+              document.body.style.userSelect = 'none';
+              e.preventDefault();
+          });
+
+          document.addEventListener('mousemove', function(e) {
+              if (!resizer.classList.contains('dragging')) return;
+              var dx   = e.clientX - startX;
+              var maxW = wrapper.getBoundingClientRect().width * 0.80;
+              var newW = Math.min(Math.max(startW + dx, 200), maxW);
+              sidebar.style.width    = newW + 'px';
+              sidebar.style.minWidth = newW + 'px';
+              if (typeof network !== 'undefined' && network) {
+                  try { network.redraw(); } catch(err) {}
+              }
+          });
+
+          document.addEventListener('mouseup', function() {
+              if (!resizer.classList.contains('dragging')) return;
+              resizer.classList.remove('dragging');
+              document.body.style.cursor    = '';
+              document.body.style.userSelect = '';
+              if (typeof network !== 'undefined' && network) {
+                  try { network.fit(); } catch(err) {}
+              }
+          });
+      })();
+    </script>
+  </body>
+</html>
