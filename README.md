@@ -6,7 +6,7 @@ ngf is a script I made to visualize the output of Nmap. The script is simple, it
 
 clone the repo
 ```shell
-git clone <URL>
+git clone https://github.com/vulnerk0/ngf.git
 ```
 
 cd into the repo directory
