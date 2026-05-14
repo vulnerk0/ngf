@@ -42,13 +42,13 @@ the script will output an HTML file that you can simply share or view
 firefox nmap_graph.html
 ```
 
-TODO:
-| What?        | Done?           |
-| ------------- |:-------------:|
-| Fetch the Router / Domain Controller     | NO |
-| Find a better way to determine the OS      | NO |
-| Add a host rename functionality | NO |
-| Find a better way to set an image for the node | NO |
+| TODO        |
+| ------------- |
+| Fetch the Router / Domain Controller|
+| Find a better way to determine the OS|
+| Add a host rename functionality|
+| Find a better way to set an image for the node|
+| Make it possible to run the script from anywhere on the system|
 
 # AI Usage
 I wrote the entire script and only used AI to generate the side bar and I then modified it extensively
