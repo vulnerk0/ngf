@@ -135,7 +135,7 @@ options =
     # net.show_buttons()
     # net.set_template("./settings.html")
     net.set_template("./template.html")
-    net.save_graph(name='index.html')
+    net.save_graph(name='nmap_graph.html')
 
 if __name__ == '__main__':
     main()
