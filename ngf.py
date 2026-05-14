@@ -3,9 +3,7 @@
 from pyvis.network import Network
 import os
 import sys
-import xml.etree.ElementTree as ET 
-from itertools import combinations
-import requests
+import xml.etree.ElementTree as ET
 
 tree = ET.parse(sys.argv[1])
 root = tree.getroot()
