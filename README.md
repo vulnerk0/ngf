@@ -1,5 +1,8 @@
 # ngf
 
+<img width="1920" height="998" alt="image" src="https://github.com/user-attachments/assets/3244ed82-a0fe-4b92-8013-79e37e11bab5" />
+
+
 ngf is a script I made to visualize the output of Nmap. The script is simple, it takes an XML file and parses the hosts and thier information and using pyvis, displays a graph of the hosts with a side bar to view the information.
 
 # Installation
