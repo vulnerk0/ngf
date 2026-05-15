@@ -1069,6 +1069,7 @@
               var openCount = (host.ports || []).filter(function(p){ return p.state === 'open'; }).length;
               summary.innerHTML =
                   '<b style="color:#adb5bd">Hostname:</b> ' + escHtml(host.hostname || '—') + '&nbsp;&nbsp;' +
+                  '<b style="color:#adb5bd">IP Address:</b> ' + escHtml(host.ip || '—') + '&nbsp;&nbsp;' +
                   '<b style="color:#adb5bd">OS:</b> '       + escHtml(host.os || 'Unknown')  + '&nbsp;&nbsp;' +
                   '<b style="color:#adb5bd">Ports:</b> '    +
                       '<span style="color:#6fcf97;font-weight:700;">' + openCount + ' open</span>' +
@@ -1087,7 +1088,7 @@
               var table = document.createElement('table');
               table.className = 'port-table';
 
-              // header
+              // There is the reason and extra information columns, I might add them later
               table.innerHTML =
                   '<thead><tr>' +
                       '<th class="pt-col-port"   title="Port">Port</th>'    +

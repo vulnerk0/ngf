@@ -17,9 +17,9 @@ cd into the repo directory
 cd ngf
 ```
 
-install the libraries, the only ones you need are pyvis and requests
+install the libraries, the only one you need is pyvis 
 ```shell
-pip3 install pyvis requests
+pip3 install pyvis
 ```
 
 >[!note]
@@ -51,12 +51,12 @@ firefox nmap_graph.html
 | Make it possible to run the script from anywhere on the system|
 
 # Improving the tool
-I need alot of network scans data so I can better understand how to determine the Router/DC, this way I can group the nodes around the Router/DC, and I will try to cover as much operating system's logos as possible, you can upload an XML scan file to [this form](https://forms.gle/N52BKo9fJbU4GJk6A) so I can better analyze the data, here is the criteria:
+I need alot of network scans data so I can better understand how to determine the Router/DC, this way I can group the nodes around the Router/DC, and I will try to cover as much operating system's logos as possible, you can upload an XML scan file to [this form](https://forms.gle/N52BKo9fJbU4GJk6A) so I can better analyze the data. here is the criteria:
 - 3+ devices
 - Router/DC present in the scan
 
 # AI Usage
-I wrote the entire script and only used AI to generate the side bar and I then modified it extensively
+I wrote the entire script and only used AI to generate the side bar and then I modified it extensively
 
 # Credit
 Thanks to my friend [Mohammed Alsafari](https://github.com/Feloxorea) for giving me the idea for the script

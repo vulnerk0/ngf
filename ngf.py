@@ -4,7 +4,6 @@ from pyvis.network import Network
 import os
 import sys
 import xml.etree.ElementTree as ET
-import requests
 import concurrent.futures
 
 tree = ET.parse(sys.argv[1])
@@ -21,17 +20,18 @@ def get_hosts(root):
         print("There was an error in get_hosts", e)
     return hosts_arr
 
-def set_image(os, session):
+def set_image(os):
     # Instead of using the github API which has rate limiting, I found out that githubusercontent doesn't have any rate limiting and no auth is needed...
     try:
+        supported_OSs = ["Linux", "Microsoft", "Cisco", "FreeBSD", "Apple"]
+        
         if os is not None:
             os = os.split(' ')[0]
         else:
             os = "Unknown"
+        
         image_url = f"https://raw.githubusercontent.com/vulnerk0/ngf_icons/refs/heads/main/{os}.png"
-        res = requests.get(image_url)
-        print(f"Detected OS: {os}, Grabbing the image, status code {res.status_code}")
-        if res.status_code == 200:
+        if os in supported_OSs:
             return image_url
         else:
             return "https://raw.githubusercontent.com/vulnerk0/ngf_icons/refs/heads/main/Unknown.png"
@@ -67,11 +67,11 @@ def get_info(host):
     return host_info
 
 
-def add_node(host, session):
+def add_node(host):
     try:
         host_info = get_info(host)
         os = host_info["os"]
-        image = set_image(os, session)
+        image = set_image(os)
         ip = host_info["ip"]
         title = host_info["hostname"]
         net.add_node(ip, label=title + f" [{len(host_info["ports"])}]", shape='image', image=image,host_info = host_info)
@@ -83,9 +83,8 @@ def add_node(host, session):
 def main():
     hosts_arr = get_hosts(root)
     with concurrent.futures.ThreadPoolExecutor() as executer:
-        session = requests.Session() # This way the connection to githubusercontent is persistant across all image requests, which resulted in lower times (14s -> 10s)
         for host in hosts_arr:
-            executer.submit(add_node, host, session)
+            executer.submit(add_node, host)
     net.set_options("""
 options = 
 {
