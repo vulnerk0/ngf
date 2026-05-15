@@ -4,6 +4,8 @@ from pyvis.network import Network
 import os
 import sys
 import xml.etree.ElementTree as ET
+import requests
+import concurrent.futures
 
 tree = ET.parse(sys.argv[1])
 root = tree.getroot()
@@ -19,27 +21,20 @@ def get_hosts(root):
         print("There was an error in get_hosts", e)
     return hosts_arr
 
-def set_image(os):
-
-    # TODO: find another way to set the image.
-    images_dict = {"Windows":"./ngf_icons/Windows.png",
-                    "Linux":"./ngf_icons/Linux.png",
-                    "FreeBSD":"./ngf_icons/FreeBSD.png",
-                    "Cisco":"./ngf_icons/Cisco.png",
-                    "Unknown":"./ngf_icons/Unknown.png"}
-    try: # I chose to use if else instead of switch case because some people might be using python < 3.10 . might change later...
-        if(os == None):
-            return images_dict["Unknown"]
-        elif("Windows" in os):
-            return images_dict["Windows"]
-        elif("Linux" in os):
-            return images_dict["Linux"]
-        elif("FreeBSD" in os):
-            return images_dict["FreeBSD"]
-        elif("Cisco" in os):
-            return images_dict["Cisco"]
+def set_image(os, session):
+    # Instead of using the github API which has rate limiting, I found out that githubusercontent doesn't have any rate limiting and no auth is needed...
+    try:
+        if os is not None:
+            os = os.split(' ')[0]
         else:
-            return images_dict["Unknown"]
+            os = "Unknown"
+        image_url = f"https://raw.githubusercontent.com/vulnerk0/ngf_icons/refs/heads/main/{os}.png"
+        res = requests.get(image_url)
+        print(f"Detected OS: {os}, Grabbing the image, status code {res.status_code}")
+        if res.status_code == 200:
+            return image_url
+        else:
+            return "https://raw.githubusercontent.com/vulnerk0/ngf_icons/refs/heads/main/Unknown.png"
     except Exception as e:
         print("There was an error in set_image", e)
 
@@ -72,23 +67,25 @@ def get_info(host):
     return host_info
 
 
-def create_network(hosts_arr):
+def add_node(host, session):
     try:
-        for host in hosts_arr:
-            host_info = get_info(host)
-            os = host_info["os"]
-            image = set_image(os)
-            ip = host_info["ip"]
-            title = host_info["hostname"]
-            net.add_node(ip, label=title + f" [{len(host_info["ports"])}]", shape='image', image=image,host_info = host_info)
+        host_info = get_info(host)
+        os = host_info["os"]
+        image = set_image(os, session)
+        ip = host_info["ip"]
+        title = host_info["hostname"]
+        net.add_node(ip, label=title + f" [{len(host_info["ports"])}]", shape='image', image=image,host_info = host_info)
     except Exception as e:
-        print("There was an error in create_network", e)
+        print("There was an error in add_node", e)
 
 
 
 def main():
     hosts_arr = get_hosts(root)
-    create_network(hosts_arr)
+    with concurrent.futures.ThreadPoolExecutor() as executer:
+        session = requests.Session() # This way the connection to githubusercontent is persistant across all image requests, which resulted in lower times (14s -> 10s)
+        for host in hosts_arr:
+            executer.submit(add_node, host, session)
     net.set_options("""
 options = 
 {
@@ -132,8 +129,6 @@ options =
   }
 }
 """)
-    # net.show_buttons()
-    # net.set_template("./settings.html")
     net.set_template("./template.html")
     net.save_graph(name='nmap_graph.html')
 
